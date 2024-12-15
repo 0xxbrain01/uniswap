@@ -71,3 +71,7 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](LICENSE).
+
+https://github.com/pancakeswap/pancake-frontend/blob/develop/packages/universal-router-sdk/test/trade.test.ts
+
+https://github.com/pancakeswap/smart-router-example/blob/master/src/SmartRouterExample.tsx
