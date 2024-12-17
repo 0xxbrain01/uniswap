@@ -1,23 +1,18 @@
 import { Injectable } from '@nestjs/common';
-
-import {
-  Currency,
-  TradeType,
-  CurrencyAmount,
-  Token,
-  Percent,
-  WBNB,
-} from '@pancakeswap/sdk';
-import { PoolType, SmartRouter, V2Pool } from '@pancakeswap/smart-router';
+import { TradeType, CurrencyAmount, Token } from '@pancakeswap/sdk';
 import { ChainId } from '@pancakeswap/chains';
 import { ethers } from 'ethers';
-// import { SwapRouter } from '@pancakeswap/smart-router';
-import { V4Router } from '@pancakeswap/smart-router';
-import RouterABI from '../abi.json';
-import { gql, GraphQLClient } from 'graphql-request';
-//import { SwapRouter } from '@pancakeswap/universal-router-sdk';
 import { FeeAmount, TICK_SPACINGS } from './constants';
 import { BigintIsh, sqrt } from '@pancakeswap/swap-sdk-core';
+import { AbiCoder } from 'ethers';
+import {
+  Pool,
+  nearestUsableTick,
+  TickMath,
+  Trade,
+  Route,
+} from '@pancakeswap/v3-sdk';
+
 export function encodeSqrtRatioX96(
   amount1: BigintIsh,
   amount0: BigintIsh,
@@ -27,18 +22,6 @@ export function encodeSqrtRatioX96(
   const ratioX192 = numerator / denominator;
   return sqrt(ratioX192);
 }
-import { AbiCoder } from 'ethers';
-import {
-  Pool,
-  Position,
-  NonfungiblePositionManager,
-  SwapRouter,
-  nearestUsableTick,
-  TickMath,
-  Trade,
-  Route,
-} from '@pancakeswap/v3-sdk';
-
 const feeAmount = FeeAmount.MEDIUM;
 const sqrtRatioX96 = encodeSqrtRatioX96(1, 1);
 const liquidity = 1_000_000;
@@ -113,9 +96,6 @@ export class AppService {
     );
     await this.pancakeSwapV3(outputToken, inputToken, amountIn);
   }
-  getHello(): string {
-    return 'Hello World!';
-  }
 
   async pancakeSwapV3(inputToken: Token, outputToken: Token, amountIn: bigint) {
     const provider = new ethers.JsonRpcProvider(this.RPC);
@@ -130,12 +110,6 @@ export class AppService {
       CurrencyAmount.fromRawAmount(inputToken, amountIn),
       TradeType.EXACT_INPUT,
     );
-    console.log(
-      '🚀 ~ PancakeswapService ~ pancakeSwapV3 ~ trade:',
-      pool,
-      trade,
-    );
-    //const slippageTolerance = new Percent(1, 100);
 
     const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
 
@@ -146,7 +120,6 @@ export class AppService {
     const ROUTER_ABI = [
       'function execute(bytes calldata commands, bytes[] calldata inputs, uint256 deadline) payable returns (bytes[] memory)',
     ];
-    // const routerInterface = new ethers.Interface(ROUTER_ABI);
 
     const router = new ethers.Contract(
       this.PANCAKE_V3_SWAP_ROUTER_ADDRESS,
@@ -165,24 +138,16 @@ export class AppService {
       [inputToken.address, outputToken.address],
       [2500], // 0.25% fee tier
     );
-    //console.log('🚀 ~ AppService ~ pancakeSwapV3 ~ path:', path);
 
     const encodedParams = abiCoder.encode(
       ['address', 'uint256', 'uint256', 'bytes', 'uint256'],
       [this.receiver, amountIn, 0, path, 0],
     );
-    // console.log(
-    //   '🚀 ~ AppService ~ pancakeSwapV3 ~ encodedParams:',
-    //   encodedParams,
-    // );
 
     const hashInput2 = [encoded, encodedParams];
     const command = '0x0b00'; // command for V2_SWAP_EXACT_IN
     const tx = await router.execute(command, hashInput2, deadline, {
-      value:
-        inputToken.address === this.WBNB_ADDRESS || inputToken.isNative
-          ? amountIn
-          : 0,
+      value: inputToken.isNative ? amountIn : 0,
       gasLimit: 300000,
       nonce: await this.wallet.getNonce(),
       gasPrice: gasPrice,
