@@ -187,9 +187,9 @@ export class AppService {
 
     console.log('🚀 ~ AppService ~ pancakeSwapV3 ~ txRequest:', tx);
 
-    // const res = await wallet.sendTransaction(tx);
-    // const receipt = await res.wait();
-    // console.log('🚀 ~ PancakeswapService ~ pancakeSwapV3 ~ res:', receipt, res);
+    const res = await wallet.sendTransaction(tx);
+    const receipt = await res.wait();
+    console.log('🚀 ~ PancakeswapService ~ pancakeSwapV3 ~ res:', receipt, res);
   }
 
   encodePath(path: string[], fees: number[]): string {
