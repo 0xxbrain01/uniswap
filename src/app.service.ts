@@ -129,7 +129,7 @@ export class AppService {
       pool,
       trade,
     );
-    const slippageTolerance = new Percent(1, 100);
+    //const slippageTolerance = new Percent(1, 100);
     const amountIn = ethers.parseEther('0.01');
     const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
 
@@ -140,43 +140,41 @@ export class AppService {
     const ROUTER_ABI = [
       'function execute(bytes calldata commands, bytes[] calldata inputs, uint256 deadline) payable returns (bytes[] memory)',
     ];
-    const routerInterface = new ethers.Interface(ROUTER_ABI);
+    // const routerInterface = new ethers.Interface(ROUTER_ABI);
 
     const router = new ethers.Contract(
       this.PANCAKE_V3_SWAP_ROUTER_ADDRESS,
       ROUTER_ABI,
       wallet,
     );
-    const hashInput = [
-      '0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000002386f26fc10000',
-      '0x000000000000000000000000c1ad7e6c81113ad0c15ee6c3f8b7c19dcdea0143000000000000000000000000000000000000000000000000002386f26fc1000000000000000000000000000000000000000000000000000017f6c534a77f689a00000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002bae13d989dac2f0debff460ac112a837c89baa7cd0009c48d008b313c1d6c7fe2982f62d32da7507cf43551000000000000000000000000000000000000000000',
-    ];
+    // const hashInput = [
+    //   '0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000002386f26fc10000',
+    //   '0x000000000000000000000000c1ad7e6c81113ad0c15ee6c3f8b7c19dcdea0143000000000000000000000000000000000000000000000000002386f26fc1000000000000000000000000000000000000000000000000000017f6c534a77f689a00000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002bae13d989dac2f0debff460ac112a837c89baa7cd0009c48d008b313c1d6c7fe2982f62d32da7507cf43551000000000000000000000000000000000000000000',
+    // ];
 
+    const values = [2n, amountIn];
     // data source 1
     const abiCoder = new AbiCoder();
-    const encoded = abiCoder.encode(
-      ['uint256[]'],
-      [[2, BigInt('10000000000000000')]],
-    );
+    const encoded = abiCoder.encode(['uint256', 'uint256'], values);
     console.log('🚀 ~ AppService ~ pancakeSwapV3 ~ encoded:', encoded);
 
     // data source 2
     const path = this.encodePath(
       [this.WBNB_ADDRESS, this.CAKE_ADDRESS],
-      [2500], // 0.3% fee tier
+      [2500], // 0.25% fee tier
     );
-    console.log('🚀 ~ AppService ~ pancakeSwapV3 ~ path:', path);
+    //console.log('🚀 ~ AppService ~ pancakeSwapV3 ~ path:', path);
 
     const encodedParams = abiCoder.encode(
       ['address', 'uint256', 'uint256', 'bytes', 'uint256'],
       [this.receiver, amountIn, 0, path, 0],
     );
-    console.log(
-      '🚀 ~ AppService ~ pancakeSwapV3 ~ encodedParams:',
-      encodedParams,
-    );
+    // console.log(
+    //   '🚀 ~ AppService ~ pancakeSwapV3 ~ encodedParams:',
+    //   encodedParams,
+    // );
 
-    const hashInput2 = [hashInput[0], encodedParams];
+    const hashInput2 = [encoded, encodedParams];
 
     // decode
     // const a =
@@ -192,7 +190,7 @@ export class AppService {
       hashInput2,
       deadline,
       {
-        value: ethers.parseEther('0.01'), // Required for native token swaps
+        value: amountIn, // Required for native token swaps
         gasLimit: 300000,
         nonce: await this.wallet.getNonce(),
         gasPrice: gasPrice,
