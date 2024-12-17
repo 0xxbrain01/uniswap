@@ -179,7 +179,10 @@ export class AppService {
     const hashInput2 = [encoded, encodedParams];
     const command = '0x0b00'; // command for V2_SWAP_EXACT_IN
     const tx = await router.execute(command, hashInput2, deadline, {
-      value: inputToken.address === this.WBNB_ADDRESS ? amountIn : 0,
+      value:
+        inputToken.address === this.WBNB_ADDRESS || inputToken.isNative
+          ? amountIn
+          : 0,
       gasLimit: 300000,
       nonce: await this.wallet.getNonce(),
       gasPrice: gasPrice,
